@@ -10,7 +10,7 @@ cluster_members=[
     ]
 )
 
-queue = client.get_queue("queue")
+queue = client.get_queue("queue").blocking()
 
 for i in range(1, 101):
     queue.put(i)
