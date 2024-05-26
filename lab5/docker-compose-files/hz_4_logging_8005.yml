@@ -1,0 +1,6 @@
+services:
+  hazelcast-8005:
+    network_mode: 'bridge'
+    image: hazelcast/hazelcast
+    container_name: 'hz-logging-3'
+    
