@@ -1,9 +1,13 @@
 from flask import Flask, request, jsonify
 import time
-import argparse
+#import argparse
+import logging
 
 app = Flask(__name__)
 messages = []
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 '''parser = argparse.ArgumentParser(description='Hazelcast map logging service')
 
@@ -14,6 +18,7 @@ secondary_port = argv.port'''
 
 @app.route('/replicate', methods=['POST'])
 def replicate_message():
+    time.sleep(10)
     message = request.json.get('message')
     if not message:
         return jsonify({'error': 'No message provided'}), 400
@@ -21,7 +26,7 @@ def replicate_message():
     time.sleep(5)
 
     messages.append(message)
-    print(f"Replicated message: {message}")
+    logger.info(f"Replicated message: {message}")
     return jsonify({'status': 'Message replicated'}), 200
 
 @app.route('/messages', methods=['GET'])
