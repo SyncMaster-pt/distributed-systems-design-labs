@@ -18,6 +18,9 @@ async def replicate_message(session, server, message, _id):
                 if response.status == 200:
                     logger.info(f"Message replicated to {server}")
                     break
+        except aiohttp.ClientResponseError as e:
+            logger.error(f"Error replicating to {server}: HTTP error {e.status}")
+            await asyncio.sleep(5)
         except aiohttp.ClientError as e:
             logger.error(f"Error replicating to {server}: {e}")
             await asyncio.sleep(5)

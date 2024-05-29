@@ -37,9 +37,9 @@ def replicate_message():
 
     '''if _id == 2 or _id == 3:
         logger.error(f"Simulated internal server error for message: {message}")
-        return jsonify({'error': 'Internal Server Error'}), 500
+        return jsonify({'error': 'Internal Server Error'}), 500'''
     
-    messages.insert(_id, message)'''
+    messages.insert(_id, message)
 
     if choice([True, False]):
         logger.error(f"Simulated internal server error for message: {message}")
