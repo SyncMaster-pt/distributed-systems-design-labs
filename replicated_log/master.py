@@ -8,18 +8,19 @@ app = Flask(__name__)
 messages = []
 secondary_servers = ['http://secondary1:8001', 'http://secondary2:8001']
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-async def replicate_message(session, server, message):
-    try:
-        async with session.post(f'{server}/replicate', json={'message': message}) as response:
-            if response.status == 200:
-                logger.info(f"Message replicated to {server}")
-                return server
-    except aiohttp.ClientError as e:
-        logger.error(f"Error replicating to {server}: {e}")
-        await asyncio.sleep(1)
+async def replicate_message(session, server, message, _id):
+    while True:
+        try:
+            async with session.post(f'{server}/replicate', json={'message': message, 'id': _id}) as response:
+                if response.status == 200:
+                    logger.info(f"Message replicated to {server}")
+                    break
+        except aiohttp.ClientError as e:
+            logger.error(f"Error replicating to {server}: {e}")
+            await asyncio.sleep(5)
 
 @app.route('/messages', methods=['POST'])
 def add_message():
@@ -34,20 +35,25 @@ def add_message():
     elif w < 1:
         return jsonify({'error': 'Concern must be an int greater than or equal to 1'}), 400
 
+    if message in messages:
+        logger.info(f"Message already exists: {message}")
+        return jsonify({'status': 'Message already exists'}), 200
+    
     messages.append(message)
+    _id = messages.index(message)
     logger.info(f"Received message: {message}")
 
     async def replicate_to_secondary(concern):
             if concern == 1:
                 async def replicate_to_all(message):
                     async with aiohttp.ClientSession() as session:
-                        tasks = [replicate_message(session, server, message) for server in secondary_servers]
+                        tasks = [replicate_message(session, server, message, _id) for server in secondary_servers]
                         await asyncio.gather(*tasks)
                 threading.Thread(target=asyncio.run, args=(replicate_to_all(message),)).start()
             else:
                 responses = []
                 async with aiohttp.ClientSession() as session:
-                    tasks = [replicate_message(session, server, message) for server in secondary_servers]
+                    tasks = [replicate_message(session, server, message, _id) for server in secondary_servers]
                     for completed_task in asyncio.as_completed(tasks):
                         result = await completed_task
                         responses.append(result)
